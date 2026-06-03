@@ -348,7 +348,8 @@
             // Add unique cache-busting value to force browser fresh loads
             const seed = Math.floor(Math.random() * 1000000);
             const encodedPrompt = encodeURIComponent(finalPrompt);
-            const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+    
 
             // Use browser cache verification to render the image completely before showing
             const imgTracker = new Image();
