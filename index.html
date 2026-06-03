@@ -82,20 +82,29 @@
             margin-bottom: 8px;
         }
 
-        textarea {
+        .input-group label a {
+            color: var(--primary-green);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--primary-green);
+        }
+
+        textarea, input[type="text"] {
             width: 100%;
-            height: 100px;
             background-color: var(--bg-black);
             border: 1px solid var(--border-gray);
             border-radius: 8px;
             color: var(--text-white);
             padding: 12px;
             font-size: 1rem;
-            resize: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        textarea:focus {
+        textarea {
+            height: 100px;
+            resize: none;
+        }
+
+        textarea:focus, input[type="text"]:focus {
             outline: none;
             border-color: var(--primary-green);
             box-shadow: 0 0 10px rgba(0, 255, 102, 0.1);
@@ -257,6 +266,11 @@
 
         <main class="main-card">
             <div class="input-group">
+                <label for="api-key">Pollinations API Key (<a href="https://enter.pollinations.ai/" target="_blank">Get Free Key Here</a>)</label>
+                <input type="text" id="api-key" placeholder="Paste your pk_* or sk_* key here...">
+            </div>
+
+            <div class="input-group">
                 <label for="prompt">Image Prompt</label>
                 <textarea id="prompt" placeholder="A futuristic cyberpunk city streets, neon green lights, ultra realistic, 8k resolution..."></textarea>
             </div>
@@ -309,8 +323,20 @@
     </div>
 
     <script>
+        // Load API key from local memory if available on boot
+        const keyInput = document.getElementById('api-key');
+        if (localStorage.getItem('auragen_api_key')) {
+            keyInput.value = localStorage.getItem('auragen_api_key');
+        }
+
+        // Cache API key input automatically on modification
+        keyInput.addEventListener('input', () => {
+            localStorage.setItem('auragen_api_key', keyInput.value.trim());
+        });
+
         document.getElementById('generate-btn').addEventListener('click', () => {
             const promptInput = document.getElementById('prompt').value.trim();
+            const apiKey = keyInput.value.trim();
             const aspectRatio = document.getElementById('aspect-ratio').value;
             const styleFilter = document.getElementById('enhance').value;
             
@@ -320,12 +346,17 @@
             const actionButtons = document.getElementById('action-buttons');
             const generateBtn = document.getElementById('generate-btn');
 
-            if (!promptInput) {
-                alert('Please enter a description prompt first.');
+            if (!apiKey) {
+                alert('Please enter your free Pollinations API Key first.');
                 return;
             }
 
-            // Reset UI state to loading sequence
+            if (!promptInput) {
+                alert('Please enter an image description prompt.');
+                return;
+            }
+
+            // Reset UI state to generation mode
             placeholder.style.display = 'none';
             resultImage.style.display = 'none';
             actionButtons.style.display = 'none';
@@ -346,50 +377,34 @@
             if (styleFilter === 'digital-art') finalPrompt += ", concept art, smooth digital painting, trending on artstation";
             if (styleFilter === 'photography') finalPrompt += ", professional award-winning photography, hyper-realistic, 35mm lens, sharp focus";
 
-            // Universal parameters configuration
             const seed = Math.floor(Math.random() * 1000000);
             const encodedPrompt = encodeURIComponent(finalPrompt);
-            const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+            
+            // Modern, verified API destination layout targeting Unified Gateway
+            const imageUrl = `https://gen.pollinations.ai/image/${encodedPrompt}?model=flux&width=${width}&height=${height}&seed=${seed}&nologo=true&key=${apiKey}`;
 
-            // Bind listeners directly to the DOM element BEFORE assigning src to avoid racing issues
+            // Image loading pipeline confirmation listeners
             resultImage.onload = () => {
                 loaderContainer.style.display = 'none';
                 resultImage.style.display = 'block';
                 actionButtons.style.display = 'block';
-                
                 generateBtn.disabled = false;
                 generateBtn.style.opacity = '1';
             };
 
             resultImage.onerror = () => {
-                // Secondary backup network route execution if DNS or regional routing fails
-                console.warn("Primary endpoint blocked or busy. Engaging backup CDN pipeline...");
-                const fallbackUrl = `https://pollinations.ai/p/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
-                
-                resultImage.onload = () => {
-                    loaderContainer.style.display = 'none';
-                    resultImage.style.display = 'block';
-                    actionButtons.style.display = 'block';
-                    generateBtn.disabled = false;
-                    generateBtn.style.opacity = '1';
-                };
-                
-                resultImage.onerror = () => {
-                    loaderContainer.style.display = 'none';
-                    placeholder.style.display = 'block';
-                    placeholder.innerText = 'Unable to connect to the generation stream. Please check your internet connection or try a different prompt.';
-                    generateBtn.disabled = false;
-                    generateBtn.style.opacity = '1';
-                };
-                
-                resultImage.src = fallbackUrl;
+                loaderContainer.style.display = 'none';
+                placeholder.style.display = 'block';
+                placeholder.innerText = 'The generation engine rejected the request. Please verify that your API key is active and correctly pasted.';
+                generateBtn.disabled = false;
+                generateBtn.style.opacity = '1';
             };
 
-            // Fire pure native browser stream source assignment (bypasses restrictive client-side CORS checking)
+            // Initiate source assignment
             resultImage.src = imageUrl;
         });
 
-        // Safe Client-Side Binary Blob Downloader with Sandbox Fallback
+        // Binary Downloader with Sandbox Fallback Layer
         document.getElementById('download-btn').addEventListener('click', async () => {
             const resultImage = document.getElementById('result-image');
             if (!resultImage.src) return;
@@ -401,7 +416,7 @@
 
             try {
                 const response = await fetch(resultImage.src);
-                if (!response.ok) throw new Error("Network download block encountered");
+                if (!response.ok) throw new Error("Download pipeline interrupted");
                 
                 const blob = await response.blob();
                 const blobUrl = window.URL.createObjectURL(blob);
@@ -415,8 +430,7 @@
                 document.body.removeChild(link);
                 setTimeout(() => window.URL.revokeObjectURL(blobUrl), 150);
             } catch (error) {
-                console.warn("Direct download stream restricted by browser sandbox. Engaging secondary safe tab window stream layout...", error);
-                // Fallback for sandboxed mobile views: opens directly so user can hold down to save/copy
+                // Secondary fallback bypass if local sandboxing blocks Blob assembly
                 window.open(resultImage.src, '_blank');
             } finally {
                 downloadBtn.innerText = originalText;
