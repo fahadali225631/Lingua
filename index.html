@@ -309,7 +309,7 @@
     </div>
 
     <script>
-        document.getElementById('generate-btn').addEventListener('click', async () => {
+        document.getElementById('generate-btn').addEventListener('click', () => {
             const promptInput = document.getElementById('prompt').value.trim();
             const aspectRatio = document.getElementById('aspect-ratio').value;
             const styleFilter = document.getElementById('enhance').value;
@@ -325,7 +325,7 @@
                 return;
             }
 
-            // Update UI State to Loading
+            // Reset UI state to loading sequence
             placeholder.style.display = 'none';
             resultImage.style.display = 'none';
             actionButtons.style.display = 'none';
@@ -333,68 +333,75 @@
             generateBtn.disabled = true;
             generateBtn.style.opacity = '0.5';
 
-            // Establish Dimensions
+            // Establish Dimensions mapping
             let width = 1024;
             let height = 1024;
             if (aspectRatio === '16:9') { width = 1280; height = 720; }
             if (aspectRatio === '9:16') { width = 720; height = 1280; }
 
-            // Refine Prompt Modifiers
+            // Refine prompt based on style filter selection
             let finalPrompt = promptInput;
             if (styleFilter === 'cinematic') finalPrompt += ", cinematic lighting, dramatic atmosphere, detailed texture, 8k";
             if (styleFilter === 'anime') finalPrompt += ", vibrant anime style, detailed line art, macro studio lighting";
             if (styleFilter === 'digital-art') finalPrompt += ", concept art, smooth digital painting, trending on artstation";
             if (styleFilter === 'photography') finalPrompt += ", professional award-winning photography, hyper-realistic, 35mm lens, sharp focus";
 
+            // Universal parameters configuration
             const seed = Math.floor(Math.random() * 1000000);
             const encodedPrompt = encodeURIComponent(finalPrompt);
+            const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
 
-            // Primary and Backup Live Server Pipelines
-            const primaryUrl = `https://pollinations.ai/p/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
-            const backupUrl = `https://gen.pollinations.ai/image/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+            // Bind listeners directly to the DOM element BEFORE assigning src to avoid racing issues
+            resultImage.onload = () => {
+                loaderContainer.style.display = 'none';
+                resultImage.style.display = 'block';
+                actionButtons.style.display = 'block';
+                
+                generateBtn.disabled = false;
+                generateBtn.style.opacity = '1';
+            };
 
-            // Non-blocking Sequential Network Loader
-            const runImageLoader = (targetUrl, alternativeUrl = null) => {
-                const imgTracker = new Image();
-                imgTracker.crossOrigin = "anonymous";
-
-                imgTracker.onload = () => {
+            resultImage.onerror = () => {
+                // Secondary backup network route execution if DNS or regional routing fails
+                console.warn("Primary endpoint blocked or busy. Engaging backup CDN pipeline...");
+                const fallbackUrl = `https://pollinations.ai/p/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+                
+                resultImage.onload = () => {
                     loaderContainer.style.display = 'none';
-                    resultImage.src = targetUrl;
                     resultImage.style.display = 'block';
                     actionButtons.style.display = 'block';
                     generateBtn.disabled = false;
                     generateBtn.style.opacity = '1';
                 };
-
-                imgTracker.onerror = () => {
-                    if (alternativeUrl) {
-                        console.warn("Primary pipeline busy, engaging secondary fallback layer...");
-                        runImageLoader(alternativeUrl, null);
-                    } else {
-                        loaderContainer.style.display = 'none';
-                        placeholder.style.display = 'block';
-                        placeholder.innerText = 'Server engines are currently busy. Please double check your prompt or try again.';
-                        generateBtn.disabled = false;
-                        generateBtn.style.opacity = '1';
-                    }
+                
+                resultImage.onerror = () => {
+                    loaderContainer.style.display = 'none';
+                    placeholder.style.display = 'block';
+                    placeholder.innerText = 'Unable to connect to the generation stream. Please check your internet connection or try a different prompt.';
+                    generateBtn.disabled = false;
+                    generateBtn.style.opacity = '1';
                 };
-
-                imgTracker.src = targetUrl;
+                
+                resultImage.src = fallbackUrl;
             };
 
-            // Initiate loading sequence
-            runImageLoader(primaryUrl, backupUrl);
+            // Fire pure native browser stream source assignment (bypasses restrictive client-side CORS checking)
+            resultImage.src = imageUrl;
         });
 
-        // Fixed Clean Binary Downloader
+        // Safe Client-Side Binary Blob Downloader with Sandbox Fallback
         document.getElementById('download-btn').addEventListener('click', async () => {
             const resultImage = document.getElementById('result-image');
             if (!resultImage.src) return;
 
+            const downloadBtn = document.getElementById('download-btn');
+            const originalText = downloadBtn.innerText;
+            downloadBtn.innerText = 'Downloading...';
+            downloadBtn.style.opacity = '0.7';
+
             try {
                 const response = await fetch(resultImage.src);
-                if (!response.ok) throw new Error("Download tracking failed");
+                if (!response.ok) throw new Error("Network download block encountered");
                 
                 const blob = await response.blob();
                 const blobUrl = window.URL.createObjectURL(blob);
@@ -406,10 +413,14 @@
                 link.click();
                 
                 document.body.removeChild(link);
-                window.URL.revokeObjectURL(blobUrl);
+                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 150);
             } catch (error) {
-                // Secure sandbox bypass fallback
+                console.warn("Direct download stream restricted by browser sandbox. Engaging secondary safe tab window stream layout...", error);
+                // Fallback for sandboxed mobile views: opens directly so user can hold down to save/copy
                 window.open(resultImage.src, '_blank');
+            } finally {
+                downloadBtn.innerText = originalText;
+                downloadBtn.style.opacity = '1';
             }
         });
     </script>
