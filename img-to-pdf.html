@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DocCon Ultimate - Convert multiple images (JPG, PNG, WebP) to PDF instantly. Features in-browser secure compression.">
+    <title>DocCon Ultimate - Secure Local Image to PDF Converter</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght=300;400;500;600;700;800&family=Lora:ital,wght=0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <!-- EXTERNAL STYLESHEET REFERENCE -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- REQUIRED JS CDN FROM ORIGINAL SYSTEM -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="index.html" class="nav-logo">
+            <span class="nav-logo-mark">📄</span>
+            DocCon Ultimate
+        </a>
+        <a href="index.html" class="back-link">← Back to Hub</a>
+    </nav>
+
+    <!-- HERO -->
+    <section class="tool-hero">
+        <h1>Convert Images to PDF</h1>
+        <p>Compile up to 100 images instantly directly in your active browser viewport context.</p>
+    </section>
+
+    <!-- MAIN ENGINE CARD -->
+    <div class="main-wrapper">
+
+        <div class="converter-card" id="converter">
+            <div class="upload-zone" id="dropZone" onclick="triggerFileInput()">
+                <div class="upload-icon-wrap">📸</div>
+                <span id="file-label">Drop your images here or click to browse</span>
+                <p class="upload-hint">Drag & drop supported (Max 100 files, up to 50MB each)</p>
+                <div class="format-chips">
+                    <span class="format-chip">JPEG</span>
+                    <span class="format-chip">PNG</span>
+                    <span class="format-chip">WebP</span>
+                </div>
+                <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp" multiple>
+            </div>
+
+            <div class="gallery-preview" id="imagePreviewGrid"></div>
+            <div id="statusBox"></div>
+
+            <button class="btn" id="convertBtn" disabled>
+                <span class="btn-icon">⬇</span>
+                Download Optimized PDF
+            </button>
+
+            <div class="security-note">
+                <span>🔒</span> Your files are processed locally. We never store or upload your data.
+            </div>
+        </div>
+
+        <!-- LIVE VIEWPORT PREVIEW -->
+        <div id="preview-container">
+            <div class="preview-header">
+                <div class="preview-dot"></div>
+                <span class="preview-title">Live Document Viewport</span>
+            </div>
+            <div id="preview-content"></div>
+        </div>
+
+        <!-- ADSENSE COMPLIANT EXPLANATION BLOCK -->
+        <section class="adsense-text-block">
+            <h2>Understanding Client-Side Image to PDF Processing</h2>
+            <p>
+                Converting standard static images (JPEG, PNG, WebP) into portable document format arrays can present a challenge under typical cloud rendering scenarios. DocCon Ultimate works locally to bypass typical processing delays. It operates entirely on-device, processing every file conversion locally in your browser.
+            </p>
+
+            <h3>How Our Local Compression Pipeline Functions</h3>
+            <p>
+                When you load image assets into the drop zone, our application utilizes browser-native FileReader hooks to transform raw binary data structures into base64 visual strings. From there, individual data matrices are evaluated. If an uploaded image exceeds modern target resolutions, the system automatically triggers a background canvas reduction loop.
+            </p>
+            <p>
+                This canvas resizing limits the longest image edge to 1920 pixels. Once adjusted, our local system uses optimized JPEG translation logic at a 75% quality target, reducing the image file size while keeping visual elements clear. Finally, `jsPDF` structures the files into a single master document layout.
+            </p>
+
+            <h3>Why Local Formats Retain Maximum Security</h3>
+            <p>
+                Since no external API endpoints are accessed during processing, your visual documentation, data structures, and image arrays are secure. There is no server queue wait time, your mobile cellular data is preserved, and your privacy is assured.
+            </p>
+
+            <a href="how-to-use-img-pdf.html" class="guide-promo-btn">
+                📖 View Deep-Dive Troubleshooting & Help Guide
+            </a>
+        </section>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>© 2026 DocCon Platform Infrastructure. All rights reserved.</p>
+    </footer>
+
+    <!-- PIPELINE LOGIC WITH ENHANCED STABILITY & SECURITY -->
+    <script>
+        let cachedImageArray = [];
+
+        const imageInput = document.getElementById('imageInput');
+        const fileLabel = document.getElementById('file-label');
+        const convertBtn = document.getElementById('convertBtn');
+        const statusBox = document.getElementById('statusBox');
+        const imagePreviewGrid = document.getElementById('imagePreviewGrid');
+        const previewContainer = document.getElementById('preview-container');
+        const previewContent = document.getElementById('preview-content');
+
+        function triggerFileInput() {
+            imageInput.click();
+        }
+
+        function resetWorkspace() {
+            imageInput.value = null;
+            cachedImageArray = [];
+            statusBox.innerHTML = '';
+            imagePreviewGrid.innerHTML = '';
+            imagePreviewGrid.style.display = 'none';
+            previewContent.innerHTML = '';
+            previewContainer.style.display = 'none';
+            convertBtn.disabled = true;
+            convertBtn.innerHTML = '<span class="btn-icon">⬇</span> Download Optimized PDF';
+        }
+
+        // IMAGE PIPELINE WITH STABILITY INJECTORS
+        imageInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            // FIX 1: Enforce Maximum File Limit (100 files ceiling)
+            if (files.length > 100) {
+                statusBox.innerHTML = `
+                    <div class="status-banner error">
+                        <b>✗ File Ceiling Exceeded:</b> You selected ${files.length} files. The maximum allowable limit is 100 images per document. Please reduce your selection.
+                    </div>`;
+                fileLabel.innerHTML = 'Drop your images here or click to browse';
+                imageInput.value = null;
+                convertBtn.disabled = true;
+                imagePreviewGrid.style.display = 'none';
+                previewContainer.style.display = 'none';
+                return;
+            }
+
+            fileLabel.innerHTML = `Processing <b>${files.length}</b> Assets...`;
+            statusBox.innerHTML = '';
+            imagePreviewGrid.innerHTML = '';
+            previewContent.innerHTML = '';
+            cachedImageArray = new Array(files.length);
+
+            let processedCount = 0;
+            const sizeLimit = 50 * 1024 * 1024; // FIX 2: 50MB individual file validation boundary
+            const skippedFiles = [];
+
+            files.forEach((file, index) => {
+                // FIX 2: Evaluate file size attribute
+                if (file.size > sizeLimit) {
+                    skippedFiles.push(`${file.name} (${(file.size / (1024 * 1024)).toFixed(1)}MB)`);
+                    processedCount++;
+                    evaluateProgress();
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const base64Data = event.target.result;
+                    cachedImageArray[index] = { data: base64Data, type: file.type };
+
+                    const thumb = document.createElement('div');
+                    thumb.className = 'thumb-wrapper';
+                    thumb.innerHTML = `<img src="${base64Data}">`;
+                    thumb.setAttribute('data-index', index);
+                    imagePreviewGrid.appendChild(thumb);
+
+                    const pageBlock = document.createElement('div');
+                    pageBlock.className = 'pdf-image-page-block';
+                    pageBlock.innerHTML = `<img src="${base64Data}">`;
+                    pageBlock.setAttribute('data-index', index);
+                    previewContent.appendChild(pageBlock);
+
+                    processedCount++;
+                    evaluateProgress();
+                };
+
+                reader.onerror = function() {
+                    skippedFiles.push(`${file.name} (Error reading file)`);
+                    processedCount++;
+                    evaluateProgress();
+                };
+
+                reader.readAsDataURL(file);
+            });
+
+            function evaluateProgress() {
+                if (processedCount === files.length) {
+                    // Filter out any undefined elements resulting from skipped file exclusions
+                    cachedImageArray = cachedImageArray.filter(item => item !== undefined);
+
+                    const sortedThumbs = Array.from(imagePreviewGrid.querySelectorAll('.thumb-wrapper'))
+                        .sort((a, b) => parseInt(a.getAttribute('data-index')) - parseInt(b.getAttribute('data-index')));
+                    const sortedPages = Array.from(previewContent.querySelectorAll('.pdf-image-page-block'))
+                        .sort((a, b) => parseInt(a.getAttribute('data-index')) - parseInt(b.getAttribute('data-index')));
+                    
+                    imagePreviewGrid.innerHTML = '';
+                    sortedThumbs.forEach(thumb => imagePreviewGrid.appendChild(thumb));
+                    
+                    previewContent.innerHTML = '';
+                    sortedPages.forEach(page => previewContent.appendChild(page));
+
+                    const validCount = cachedImageArray.length;
+
+                    if (validCount > 0) {
+                        previewContainer.style.display = 'block';
+                        imagePreviewGrid.style.display = 'grid';
+                        fileLabel.innerHTML = `<b>${validCount} Images Ready</b>`;
+                        
+                        let statusMessage = `<div class="status-banner success"><b>✓ Ready:</b> compilation arrays loaded. Dynamic optimization will apply on save.</div>`;
+                        if (skippedFiles.length > 0) {
+                            statusMessage += `
+                                <div class="status-banner error" style="margin-top: 10px;">
+                                    <b>⚠ Skipped Files (Exceeding 50MB or Unreadable):</b><br>
+                                    ${skippedFiles.map(name => `• ${name}`).join('<br>')}
+                                </div>`;
+                        }
+                        statusBox.innerHTML = statusMessage;
+                        convertBtn.disabled = false;
+                    } else {
+                        fileLabel.innerHTML = 'Drop your images here or click to browse';
+                        statusBox.innerHTML = `
+                            <div class="status-banner error">
+                                <b>✗ Processing Failed:</b> No valid files loaded under the 50MB ceiling limit.<br>
+                                ${skippedFiles.map(name => `• ${name}`).join('<br>')}
+                            </div>`;
+                        convertBtn.disabled = true;
+                    }
+                }
+            }
+        });
+
+        // GENERATION WITH HIGH PERF & STABLE MEMORY ALLOCATIONS
+        convertBtn.addEventListener('click', async function() {
+            convertBtn.disabled = true;
+            convertBtn.innerHTML = '<span class="btn-icon">⏳</span> Compressing & Compiling...';
+
+            // FIX 6: Lift canvas initialization OUTSIDE of processing loop to optimize resources
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // FIX 5: Standardize UI Control States with robust try-catch-finally structural block
+            try {
+                const { jsPDF } = window.jspdf;
+                let pdf = null;
+
+                for (let i = 0; i < cachedImageArray.length; i++) {
+                    const imageData = cachedImageArray[i];
+                    if (!imageData) continue;
+
+                    const img = new Image();
+                    img.src = imageData.data;
+
+                    // FIX 4: Add explicit error & 30s timeout handling bounds to visual file loader
+                    await new Promise((resolve, reject) => {
+                        const timeoutId = setTimeout(() => {
+                            img.onload = null;
+                            img.onerror = null;
+                            reject(new Error(`Timeout of 30 seconds exceeded loading file at index ${i + 1}.`));
+                        }, 30000);
+
+                        img.onload = () => {
+                            clearTimeout(timeoutId);
+                            resolve();
+                        };
+                        
+                        img.onerror = () => {
+                            clearTimeout(timeoutId);
+                            reject(new Error(`Corrupted or unreadable image asset encountered at index ${i + 1}.`));
+                        };
+                    });
+
+                    // Dynamic canvas downscale calculations
+                    let targetWidth = img.naturalWidth;
+                    let targetHeight = img.naturalHeight;
+                    const maxEdgeResolution = 1920;
+
+                    if (targetWidth > maxEdgeResolution || targetHeight > maxEdgeResolution) {
+                        if (targetWidth > targetHeight) {
+                            targetHeight = Math.round((targetHeight * maxEdgeResolution) / targetWidth);
+                            targetWidth = maxEdgeResolution;
+                        } else {
+                            targetWidth = Math.round((targetWidth * maxEdgeResolution) / targetHeight);
+                            targetHeight = maxEdgeResolution;
+                        }
+                    }
+
+                    // FIX 6: Reuse canvas context dynamically (Clearing, resizing, and repainting iteratively)
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    ctx.clearRect(0, 0, targetWidth, targetHeight);
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                    const compressedImageURI = canvas.toDataURL('image/jpeg', 0.75);
+                    const orientation = targetWidth > targetHeight ? 'l' : 'p';
+
+                    if (pdf === null) {
+                        pdf = new jsPDF({
+                            orientation: orientation,
+                            unit: 'px',
+                            format: [targetWidth, targetHeight],
+                            compress: true 
+                        });
+                    } else {
+                        pdf.addPage([targetWidth, targetHeight], orientation);
+                    }
+
+                    pdf.addImage(compressedImageURI, 'JPEG', 0, 0, targetWidth, targetHeight, undefined, 'FAST');
+                }
+
+                if (pdf) {
+                    // FIX 3: Eliminate Blob URL Memory Leaks via clean ObjectURL revoking
+                    const pdfBlob = pdf.output('blob');
+                    const downloadUrl = URL.createObjectURL(pdfBlob);
+                    
+                    const triggerLink = document.createElement('a');
+                    triggerLink.href = downloadUrl;
+                    triggerLink.download = "optimized-compilation-output.pdf";
+                    document.body.appendChild(triggerLink);
+                    triggerLink.click();
+                    document.body.removeChild(triggerLink);
+
+                    setTimeout(() => {
+                        URL.revokeObjectURL(downloadUrl);
+                    }, 100);
+                } else {
+                    throw new Error("Compilation array is empty. No valid elements available to package.");
+                }
+
+            } catch (err) {
+                console.error("Local compilation error:", err);
+                statusBox.innerHTML += `
+                    <div class="status-banner error" style="margin-top: 10px;">
+                        <b>✗ Compilation Aborted:</b> An unexpected error prevented compiling document logic. Detail: ${err.message}
+                    </div>`;
+            } finally {
+                // FIX 5: Standardize button states to guarantee reactivation in all scenarios
+                convertBtn.innerHTML = '<span class="btn-icon">⬇</span> Download Optimized PDF';
+                convertBtn.disabled = false;
+            }
+        });
+
+        // Drag & drop logic
+        const dropZone = document.getElementById('dropZone');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--violet)';
+            dropZone.style.background = 'linear-gradient(145deg, #161a24, #222736)';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '';
+            dropZone.style.background = '';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '';
+            dropZone.style.background = '';
+            const dt = e.dataTransfer;
+            if (dt.files.length > 0) {
+                imageInput.files = dt.files;
+                imageInput.dispatchEvent(new Event('change'));
+            }
+        });
+    </script>
+</body>
+</html>
